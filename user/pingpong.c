@@ -1,27 +1,30 @@
 #include "kernel/types.h"
-#include "kernel/stat.h"
 #include "user/user.h"
 
-int
+int 
 main(int argc, char *argv[])
 {
-  int p2c[2], c2p[2];
-  pipe(p2c);
-  pipe(c2p);
-  if(fork() > 0) {
-    // parent
-    write(p2c[1], "!", 1);
-    char buf;
-    read(c2p[0], &buf, 1);
-    printf("%d, received pong\n", getpid());
-    wait(0);
-  }
-  else {
-    // child
-    char buf;
-    read(p2c[0], &buf, 1);
-    printf("%d, recieving ping\n", getpid());
-    write(c2p[1], "!", 1);
-  }
-  exit(0);
+    int p1[2], p2[2];
+    
+    pipe(p1);
+    pipe(p2);
+    char byte = 1;
+    int pid = fork();
+    if (pid == 0) {
+        close(p1[1]);
+        close(p2[0]);
+        
+        read(p1[0], &byte, sizeof byte);
+        printf("%d: received ping\n", getpid());
+        write(p2[1], &byte, sizeof byte);
+    } else {
+        close(p1[0]);
+        close(p2[1]);
+
+        write(p1[1], &byte, sizeof byte);
+        read(p2[0], &byte, sizeof byte);
+        printf("%d: received pong\n", getpid());
+        wait(0);
+    }
+    exit(0);
 }
